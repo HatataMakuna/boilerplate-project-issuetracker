@@ -22,16 +22,18 @@ module.exports = function (app) {
     .get(async function (req, res){
       try {
         let project = req.params.project;
-        let filter = req.query;
-
-        // Add query filters if needed
-        if (req.query.open) {
-          filter.open = req.query.open === 'true';
+        let query = { project: project };
+        for (let key in req.query) {
+          if (req.query.hasOwnProperty(key)) {
+            if (key === 'open') {
+              query[key] = req.query[key] === 'true';
+            } else {
+              query[key] = req.query[key];
+            }
+          }
         }
-        filter.project = project;
-
-        const issues = await Issue.find({...filter});
-        res.json(issues);
+        const issues = await Issue.find(query).select('-__v -project').exec();
+        return res.json(issues);
       } catch (err) {
         return res.status(500).json({error: 'internal server error'});
       }
@@ -79,23 +81,26 @@ module.exports = function (app) {
       }
       // Check if at least one field to update is provided
       const updateFields = {};
-      if (body.issue_title) updateFields.issue_title = body.issue_title;
-      if (body.issue_text) updateFields.issue_text = body.issue_text;
-      if (body.created_by) updateFields.created_by = body.created_by;
-      if (body.assigned_to) updateFields.assigned_to = body.assigned_to;
-      if (body.status_text) updateFields.status_text = body.status_text;
-      if (body.open !== undefined) updateFields.open = body.open;
+      for (let key in body) {
+        if (body.hasOwnProperty(key) && key !== '_id' && body[key] !== '') {
+          if (key === 'open') {
+            updateFields[key] = body[key] === 'true' || body[key] === true;
+          } else {
+            updateFields[key] = body[key];
+          }
+        }
+      }
       if (Object.keys(updateFields).length === 0) {
         return res.json({ error: 'no update field(s) sent', '_id': body._id });
       }
       updateFields.updated_on = new Date();
+
       try {
         const updatedIssue = await Issue.findByIdAndUpdate(body._id, updateFields, { new: true });
         if (!updatedIssue) return res.json({ error: 'could not update', '_id': body._id });
         res.json({ result: 'successfully updated', '_id': body._id });
       } catch (err) {
-        console.log(err);
-        return res.status(500).json({ error: 'internal server error' });
+        return res.json({ error: 'could not update', '_id': body._id });
       }
     })
     
