@@ -17,14 +17,6 @@ const IssueSchema = new mongoose.Schema({
 });
 const Issue = mongoose.model('Issue', IssueSchema);
 
-/*
-5. You can send a GET request to /api/issues/{projectname} for an array of all issues for that specific projectname, with all the fields present for each issue.
-Error: expected [] to have a length of 3 but got +0
-6. You can send a GET request to /api/issues/{projectname} and filter the request by also passing along any field and value as a URL query (ie. /api/issues/{project}?open=false). You can pass one or more field/value pairs at once.
-Error: expected [] to have a length of 3 but got +0
-7. You can send a PUT request to /api/issues/{projectname} with an _id and one or more fields to update. On success, the updated_on field should be updated, and returned should be {  result: 'successfully updated', '_id': _id }.
-Error: expected undefined to be an object
-*/
 module.exports = function (app) {
 
   app.route('/api/issues/:project')
